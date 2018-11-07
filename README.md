@@ -1,6 +1,12 @@
 This ansible playbook create server with docker and docker-compose from your gitlab repository over hosting vscale.io and up it.
 
-## Example structure in repository
+## Setup
+
+Rename and edit file `vars.yml` for real variables:
+
+    mv vars.sample.yml vars.yml
+
+### Example structure in repository
 
     ...
     /deploy/server/docker-compose.yml
@@ -9,7 +15,7 @@ This ansible playbook create server with docker and docker-compose from your git
     /deploy/...
     ...
 
-## Example run playbook
+## Run playbook
 
 Example of creating new server on hosting https://vscale.io.
 

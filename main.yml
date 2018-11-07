@@ -68,7 +68,7 @@
       src: "{{ local_tmp_path}}{{ local_docker_compose_config_path }}"
       dest: "{{ dest_path }}"
   - name: "Docker up"
-    raw: cd {{ dest_path }}{{ dest_docker_compose_config_path }} && docker login -u gitlab-ci-token -p {{ gitlab_ci_token }} {{ registry_gitlab_url }} && mv .env.sample-prod .env && docker-compose up -d
+    raw: cd {{ dest_path }}{{ dest_docker_compose_config_path }} && docker login -u gitlab-ci-token -p {{ gitlab_ci_token }} {{ registry_gitlab_url }} && docker-compose up -d
 
 - hosts: localhost
   remote_user: root
