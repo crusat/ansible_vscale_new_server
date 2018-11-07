@@ -1,0 +1,8 @@
+gitlab_url: gitlab.com
+registry_gitlab_url: registry.gitlab.com
+gitlab_ci_token: "***"
+local_tmp_path: ~/control/tmp/
+local_docker_compose_config_path: deploy/server
+dest_path: /home/user/www/
+dest_docker_compose_config_path: server
+vscale_key_name: user@pc

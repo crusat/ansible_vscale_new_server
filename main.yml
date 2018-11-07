@@ -1,0 +1,81 @@
+---
+- hosts: localhost
+  remote_user: root
+  gather_facts: no
+  vars_files:
+  - vars.yml
+  vars_prompt:
+  - name: "scalet_name"
+    prompt: "Name of scalet"
+    private: false
+  - name: "repository_path"
+    prompt: "Repository path ({{ gitlab_url }}/<???>/)"
+    private: false
+  - name: "branch"
+    prompt: "Repository branch"
+    private: false
+    default: "master"
+  tasks:
+  - name: Creating new server
+    vscale_scalets:
+      token: "3a56a7663f3b4b4abc555ba6429cf58de7c3ea9a2eff34ed6b9265a8c1852264"
+      name: "{{ scalet_name }}"
+      plan: small
+      image: ubuntu_16.04_64_001_master
+      location: msk0
+      key_name: "{{ vscale_key_name }}"
+      collect_facts: yes
+      state: present
+    register: scalet_info
+  - debug: var=scalet_info
+  - name: "Add host {{ scalet_name }} with ip address {{ scalet_info.scalet.public_address.address }}"
+    add_host:
+      name: "{{ scalet_info.scalet.public_address.address }}"
+      groups: created
+      ansible_user: root
+      ansible_python_interpreter: python3
+  - name: "Clone git repo ssh://git@{{ gitlab_url }}/{{ repository_path }}.git"
+    raw: git clone -b {{ branch }} ssh://git@{{ gitlab_url }}/{{ repository_path }}.git {{ local_tmp_path }}
+
+- hosts: created
+  remote_user: root
+  gather_facts: no
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Update all installed packages
+    raw: apt update && apt upgrade -y
+  - name: Install requirements
+    raw: apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+  - name: Add key
+    raw: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - name: Add repository
+    raw: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - name: Install docker
+    raw: apt-get update && apt-get install -y docker-ce
+  - name: Install docker-compose
+    raw: curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+
+
+- hosts: created
+  remote_user: root
+  gather_facts: no
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: "Upload deploy directory"
+    copy:
+      src: "{{ local_tmp_path}}{{ local_docker_compose_config_path }}"
+      dest: "{{ dest_path }}"
+  - name: "Docker up"
+    raw: cd {{ dest_path }}{{ dest_docker_compose_config_path }} && docker login -u gitlab-ci-token -p {{ gitlab_ci_token }} {{ registry_gitlab_url }} && mv .env.sample-prod .env && docker-compose up -d
+
+- hosts: localhost
+  remote_user: root
+  gather_facts: no
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: "Clear tmp path"
+    raw: rm -rf "{{ local_tmp_path }}"
+
